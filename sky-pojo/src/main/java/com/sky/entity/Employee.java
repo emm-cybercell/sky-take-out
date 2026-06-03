@@ -1,5 +1,6 @@
 package com.sky.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+// 当前端提交的数据和实体类中对应的属性差别比较大时，建议使用DTO来封装数据
 public class Employee implements Serializable {
 
     private static final long serialVersionUID = 1L;
