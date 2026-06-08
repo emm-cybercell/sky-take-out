@@ -8,6 +8,8 @@ import com.sky.result.PageResult;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import com.sky.annotation.AutoFill;
+import com.sky.enumeration.OperationType;
 
 @Mapper
 public interface EmployeeMapper {
@@ -29,6 +31,7 @@ public interface EmployeeMapper {
     @Insert("insert into employee(username, name, phone, sex, id_number, password, status, create_time, update_time, create_user, update_user) "
             +
             "values(#{username}, #{name}, #{phone}, #{sex}, #{idNumber}, #{password}, #{status}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})")
+    @AutoFill(value = OperationType.INSERT)
     void insert(Employee employee);
 
     /**
@@ -45,5 +48,14 @@ public interface EmployeeMapper {
      * @param status
      * @param id
      */
+    @AutoFill(value = OperationType.UPDATE)
     void update(Employee employee);
+
+    /**
+     * 根据 id 查询员工信息
+     * @param id
+     * @return
+     */
+    @Select("select * from employee where id = #{id}")
+    Employee getById(Long id); 
 }

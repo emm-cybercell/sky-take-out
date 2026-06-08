@@ -3,6 +3,7 @@ package com.sky.controller.admin;
 
 import com.sky.result.PageResult;
 import com.sky.dto.EmployeePageQueryDTO;
+import com.sky.dto.PasswordEditDTO;
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.entity.Employee;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -128,6 +130,45 @@ public class EmployeeController {
         // @PathVariable 提取的是 URL 路径中的占位符部分
         log.info("启用禁用员工账号：{},{}", status, id);
         employeeService.startOrStop(status, id);
+        return Result.success();
+    }
+
+    /**
+     * 根据 id 查询员工信息
+     * 
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    @ApiOperation(value = "根据 id 查询员工信息接口")
+    public Result<Employee> getById(@PathVariable Long id){
+        Employee employee = employeeService.getById(id);
+        return Result.success(employee);
+    } 
+
+    /**
+     * 修改员工信息
+     * 
+     * @param employeeDTO
+     * @return
+     */
+    @PutMapping
+    @ApiOperation(value = "修改员工信息接口")
+    public Result update(@RequestBody EmployeeDTO employeeDTO){
+        log.info("编辑员工信息：{}", employeeDTO);
+        employeeService.update(employeeDTO);
+        return Result.success();
+    }
+    /**
+     * 修改密码
+     * @param passwordeditDTO
+     * @return
+     */
+    @PutMapping("/editPassword")
+    @ApiOperation(value = "修改密码接口")
+    public Result editPassword(@RequestBody PasswordEditDTO passwordeditDTO){
+        log.info("修改密码:{}", passwordeditDTO);
+        employeeService.editPassword(passwordeditDTO);
         return Result.success();
     }
 }
