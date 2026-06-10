@@ -6,6 +6,10 @@ spring:
     active: dev
   main:
     allow-circular-references: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
   datasource:
     druid:
       driver-class-name: ${sky.datasource.driver-class-name}
@@ -33,7 +37,12 @@ sky:
   jwt:
     # 设置jwt签名加密时使用的秘钥
     admin-secret-key: itcast
-    # 设置jwt过期时间
-    admin-ttl: 7200000
+    # 设置jwt过期时间（30天）
+    admin-ttl: 2592000000
     # 设置前端传递过来的令牌名称
     admin-token-name: token
+  alioss:
+    endpoint: ${sky.alioss.endpoint}
+    access-key-id: ${sky.alioss.access-key-id}
+    access-key-secret: ${sky.alioss.access-key-secret}
+    bucket-name: ${sky.alioss.bucket-name}
