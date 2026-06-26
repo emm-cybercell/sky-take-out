@@ -26,7 +26,7 @@ import java.util.List;
  */
 @Service
 @Slf4j
-public class CategoryServiceImpl implements CategoryService {
+public class CategoryServicempl implements CategoryService {
 
     @Autowired// Spring 自动帮我们创建对象并赋值
     private CategoryMapper categoryMapper;

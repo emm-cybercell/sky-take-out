@@ -8,7 +8,11 @@ sky:
     password: 060709
   alioss:
     endpoint: oss-cn-beijing.aliyuncs.com
-    access-key-id: ${sky.alioss.access-key-id}
-    access-key-secret: ${sky.alioss.access-key-secret}
+    access-key-id: LTAI5t8gqtwcb1akgUr2jhvs
+    access-key-secret: qMILhlIwX6onVp7onfHCouD0bAPFZN
     bucket-name: sky-itcast-pdf
-
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 0

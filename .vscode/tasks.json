@@ -1,0 +1,11 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run SkyApplication",
+			"type": "shell",
+			"command": "cd d:\\emm\\vscodeproject\\cangqiongwaimai\\1\\day01\\后端初始工程\\sky-take-out && mvn spring-boot:run",
+			"group": "build"
+		}
+	]
+}
