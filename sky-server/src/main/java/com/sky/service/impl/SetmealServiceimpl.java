@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service // 表明该类是一个服务类，处理业务逻辑
 @Slf4j
-public class SetmealServicempl implements SetmealService {
+public class SetmealServiceimpl implements SetmealService {
     @Autowired
     private SetmealMapper setmealMapper;
 

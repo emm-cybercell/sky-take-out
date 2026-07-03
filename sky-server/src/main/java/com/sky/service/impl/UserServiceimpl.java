@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class UserServicempl implements UserService{
+public class UserServiceimpl implements UserService{
     //微信登录接口
     public static final String WX_LOGIN = "https://api.weixin.qq.com/sns/jscode2session";
     //微信配置

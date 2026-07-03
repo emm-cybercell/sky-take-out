@@ -26,7 +26,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class EmployeeServicempl implements EmployeeService {
+public class EmployeeServiceimpl implements EmployeeService {
 
     @Autowired
     private EmployeeMapper employeeMapper;
