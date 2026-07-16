@@ -2,6 +2,7 @@ package com.sky.mapper;
 
 import java.util.List;
 
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Update;
@@ -35,4 +36,12 @@ public interface ShoppingCartMapper {
             +
             "values(#{userId}, #{dishId}, #{setmealId}, #{name}, #{image}, #{amount}, #{dishFlavor}, #{number}, #{createTime})")
     void insert(ShoppingCart shoppingCart);
+
+    /**
+     * 根据用户id删除购物车数据
+     * 
+     * @param userId
+     */
+    @Delete("delete from shopping_cart where user_id = #{userId}")
+    void deleteByUserId(Long userId);
 }
