@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.sky.mapper.OrderDetailMapper">
+    <!-- 插入数据后，让数据库自动生成一个 ID 编号，并且把这个编号填回给 Java 对象 -->
+    <insert id = "insertBatch">
+        insert into order_detail(order_id, dish_id, setmeal_id, name, number, amount, image, dish_flavor)
+        values
+        <foreach collection = "orderDetailList" item = "od" separator=",">
+            (#{od.orderId}, #{od.dishId}, #{od.setmealId}, #{od.name}, #{od.number}, #{od.amount}, #{od.image}, #{od.dishFlavor})
+        </foreach>
+    </insert>
+</mapper>
