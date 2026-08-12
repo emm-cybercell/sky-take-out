@@ -177,6 +177,13 @@ public class OrderServiceimpl implements OrderService {
         // 根据订单号查询订单
         Orders ordersDB = orderMapper.getByNumber(outTradeNo);
 
+        // ponytail: 幂等保护——订单已支付过（重复点击支付/重复回调）时不再重复更新状态和推送来单提醒，
+        // 避免商家端同一订单反复响铃；接单/派送/完成后（payStatus 仍为 PAID）再次触发也不会再响。
+        if (ordersDB.getPayStatus() != null && ordersDB.getPayStatus() == Orders.PAID) {
+            log.info("订单 {} 已支付，跳过重复处理", outTradeNo);
+            return;
+        }
+
         // 根据订单id更新订单的状态、支付方式、支付状态、结账时间
         Orders orders = Orders.builder()
                 .id(ordersDB.getId())
@@ -189,11 +196,11 @@ public class OrderServiceimpl implements OrderService {
 
         // 通过websocket向客户端浏览器推送数据
         Map map = new HashMap<>();
-        map.put("type",1);
-        map.put("orderId",ordersDB.getId());
-        map.put("content","订单号：" + outTradeNo);
+        map.put("type", 1);
+        map.put("orderId", ordersDB.getId());
+        map.put("content", "订单号：" + outTradeNo);
 
-        String json = JSON.toJSONString(map);     
+        String json = JSON.toJSONString(map);
         webSocketServer.sendToAllClient(json);
     }
 
@@ -569,7 +576,5 @@ public class OrderServiceimpl implements OrderService {
             throw new OrderBusinessException("超出配送范围");
         }
     }
-
-    
 
 }
