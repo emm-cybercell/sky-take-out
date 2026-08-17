@@ -1,8 +1,8 @@
 package com.sky.mapper;
 
 import com.github.pagehelper.Page;
-import com.sky.enumeration.OperationType;
 import com.sky.annotation.AutoFill;
+import com.sky.enumeration.OperationType;
 import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.entity.Category;
 import org.apache.ibatis.annotations.Delete;
@@ -50,5 +50,4 @@ public interface CategoryMapper {
      * @return
      */
     List<Category> list(Integer type);
-
 }

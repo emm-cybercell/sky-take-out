@@ -1,0 +1,41 @@
+# 生产环境配置（Docker Compose 部署）：所有连接信息通过环境变量注入
+# 数据库/Redis 指向 compose 内的服务名（mysql / redis）
+sky:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    host: ${SKY_DATASOURCE_HOST:mysql}
+    port: ${SKY_DATASOURCE_PORT:3306}
+    database: ${SKY_DATASOURCE_DATABASE:sky_take_out}
+    username: ${SKY_DATASOURCE_USERNAME:root}
+    password: ${SKY_DATASOURCE_PASSWORD:123456}
+  alioss:
+    endpoint: ${SKY_ALIOSS_ENDPOINT:oss-cn-beijing.aliyuncs.com}
+    access-key-id: ${SKY_ALIOSS_ACCESS_KEY_ID:your-access-key-id}
+    access-key-secret: ${SKY_ALIOSS_ACCESS_KEY_SECRET:your-access-key-secret}
+    bucket-name: ${SKY_ALIOSS_BUCKET_NAME:your-bucket-name}
+  redis:
+    host: ${SKY_REDIS_HOST:redis}
+    port: ${SKY_REDIS_PORT:6379}
+    password: ${SKY_REDIS_PASSWORD:}
+    database: ${SKY_REDIS_DATABASE:0}
+  wechat:
+    appid: ${SKY_WECHAT_APPID:}
+    secret: ${SKY_WECHAT_SECRET:}
+    mchid: ${SKY_WECHAT_MCHID:}
+    mchSerialNo: ${SKY_WECHAT_MCH_SERIAL_NO:}
+    privateKeyFilePath: ${SKY_WECHAT_PRIVATE_KEY_FILE_PATH:}
+    apiV3Key: ${SKY_WECHAT_API_V3_KEY:}
+    weChatPayCertFilePath: ${SKY_WECHAT_CERT_FILE_PATH:}
+    notifyUrl: ${SKY_WECHAT_NOTIFY_URL:}
+    refundNotifyUrl: ${SKY_WECHAT_REFUND_NOTIFY_URL:}
+  baidu:
+    ak: ${SKY_BAIDU_AK:your-ak}
+
+logging:
+  level:
+    com:
+      sky:
+        # 生产环境关闭 Mapper SQL 调试日志
+        mapper: info
+        service: info
+        controller: info

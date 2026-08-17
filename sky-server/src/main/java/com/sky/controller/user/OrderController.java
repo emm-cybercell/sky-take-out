@@ -1,14 +1,5 @@
 package com.sky.controller.user;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.result.PageResult;
@@ -17,30 +8,30 @@ import com.sky.service.OrderService;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
 @RestController("userOrderController")
 @RequestMapping("/user/order")
-@Api(tags = "用户端订单相关模块")
+@Api(tags = "用户端订单相关接口")
 @Slf4j
-
+@RequiredArgsConstructor
 public class OrderController {
-    @Autowired
-    private OrderService orderService;
+
+    private final OrderService orderService;
 
     /**
      * 用户下单
-     * 
      * @param ordersSubmitDTO
      * @return
      */
     @PostMapping("/submit")
     @ApiOperation("用户下单")
-    public Result<OrderSubmitVO> submit(@RequestBody OrdersSubmitDTO ordersSubmitDTO) {
-        log.info("用户下单：参数为：{}", ordersSubmitDTO);
+    public Result<OrderSubmitVO> submit(@RequestBody OrdersSubmitDTO ordersSubmitDTO){
+        log.info("用户下单，参数为：{}",ordersSubmitDTO);
         OrderSubmitVO orderSubmitVO = orderService.submitOrder(ordersSubmitDTO);
         return Result.success(orderSubmitVO);
     }
@@ -61,23 +52,23 @@ public class OrderController {
     }
 
     /**
-     * 查询历史订单
-     * 
+     * 历史订单查询
+     *
      * @param page
      * @param pageSize
-     * @param status
+     * @param status   订单状态 1待付款 2待接单 3已接单 4派送中 5已完成 6已取消
      * @return
      */
     @GetMapping("/historyOrders")
-    @ApiOperation("查询历史订单")
-    public Result<PageResult> historyOrderswithPage(int page, int pageSize, Integer status) {
-        PageResult pageResult = orderService.PageQuery(page, pageSize, status);
+    @ApiOperation("历史订单查询")
+    public Result<PageResult> page(int page, int pageSize, Integer status) {
+        PageResult pageResult = orderService.pageQuery4User(page, pageSize, status);
         return Result.success(pageResult);
     }
 
     /**
      * 查询订单详情
-     * 
+     *
      * @param id
      * @return
      */
@@ -89,9 +80,8 @@ public class OrderController {
     }
 
     /**
-     * 取消订单
-     * 
-     * @param id
+     * 用户取消订单
+     *
      * @return
      */
     @PutMapping("/cancel/{id}")
@@ -103,23 +93,24 @@ public class OrderController {
 
     /**
      * 再来一单
-     * 
+     *
      * @param id
      * @return
      */
     @PostMapping("/repetition/{id}")
     @ApiOperation("再来一单")
-    public Result repetition(@PathVariable("id") Long id) throws Exception {
+    public Result repetition(@PathVariable Long id) {
         orderService.repetition(id);
         return Result.success();
     }
 
     /**
-     * 催单
+     * 客户催单
      * @param id
+     * @return
      */
     @GetMapping("/reminder/{id}")
-    @ApiOperation("催单")
+    @ApiOperation("客户催单")
     public Result reminder(@PathVariable("id") Long id){
         orderService.reminder(id);
         return Result.success();

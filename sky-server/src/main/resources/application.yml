@@ -1,18 +1,11 @@
+# Spring Boot 应用程序的主配置文件，存放所有环境通用的配置，以及环境激活设置
 server:
   port: 8081
 
 spring:
   profiles:
     active: dev
-  main:
-    allow-circular-references: true
-  mvc:
-    pathmatch:
-      matching-strategy: ant_path_matcher
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 100MB
+    # 设置默认环境为 dev，如果没有指定环境，则使用 dev 环境的配置
   datasource:
     druid:
       driver-class-name: ${sky.datasource.driver-class-name}
@@ -43,14 +36,15 @@ logging:
 
 sky:
   jwt:
-    # 设置jwt签名加密时使用的秘钥
-    admin-secret-key: itcast
-    # 设置jwt过期时间（30天）
-    admin-ttl: 2592000000
+    # 密钥通过环境变量注入，禁止在配置文件中硬编码（HS256 要求密钥 >= 32 字节）
+    # 本地开发默认值见 application-dev.yml，生产环境必须通过环境变量覆盖
+    admin-secret-key: ${SKY_JWT_ADMIN_SECRET}
+    # 设置jwt过期时间
+    admin-ttl: 7200000
     # 设置前端传递过来的令牌名称
     admin-token-name: token
-    user-secret-key: itheima
-    user-ttl: 2592000000
+    user-secret-key: ${SKY_JWT_USER_SECRET}
+    user-ttl: 7200000
     user-token-name: authentication
   alioss:
     endpoint: ${sky.alioss.endpoint}
@@ -70,4 +64,4 @@ sky:
   shop:
     address: 北京市海淀区上地十街10号
   baidu:
-    ak: EqJrjZbMbae2N2J54fnwsm7yBcIunGzF
+    ak: ${SKY_BAIDU_AK:your-ak}

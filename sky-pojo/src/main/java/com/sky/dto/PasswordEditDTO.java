@@ -4,7 +4,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 
-@Data
+@Data// 自动生成 getter、setter、toString、equals 和 hashCode 方法
 public class PasswordEditDTO implements Serializable {
 
     //员工id

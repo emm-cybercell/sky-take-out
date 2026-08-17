@@ -1,0 +1,52 @@
+services:
+  # MySQL：首次启动自动执行 deploy/sql/sky.sql 初始化数据库
+  mysql:
+    image: mysql:8.0
+    container_name: sky-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./deploy/sql:/docker-entrypoint-initdb.d
+      - mysql-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-123456}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Redis：菜品缓存 + 分布式锁
+  redis:
+    image: redis:7-alpine
+    container_name: sky-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  # 后端服务
+  app:
+    build: .
+    container_name: sky-server
+    ports:
+      - "8081:8081"
+    environment:
+      # 激活生产环境配置（连接 compose 内的 mysql/redis 服务名）
+      SPRING_PROFILES_ACTIVE: prod
+      # JWT 密钥：生产环境通过环境变量注入，禁止硬编码在配置文件中
+      SKY_JWT_ADMIN_SECRET: ${SKY_JWT_ADMIN_SECRET:-sky-admin-jwt-prod-secret-2024-0123456789abc}
+      SKY_JWT_USER_SECRET: ${SKY_JWT_USER_SECRET:-sky-user-jwt-prod-secret-2024-abcdefghijklmnop}
+      # 百度地图 AK：部署时替换为真实值（用于配送范围校验）
+      SKY_BAIDU_AK: ${SKY_BAIDU_AK:-your-ak}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  mysql-data:
+  redis-data:

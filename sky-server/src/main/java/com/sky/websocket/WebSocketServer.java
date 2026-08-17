@@ -1,17 +1,15 @@
 package com.sky.websocket;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
+import org.springframework.stereotype.Component;
 import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
-
-import org.springframework.stereotype.Component;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * WebSocket服务
@@ -20,7 +18,7 @@ import org.springframework.stereotype.Component;
 @ServerEndpoint("/ws/{sid}")
 public class WebSocketServer {
 
-    // 存放会话对象
+    //存放会话对象
     private static Map<String, Session> sessionMap = new HashMap();
 
     /**
@@ -62,7 +60,7 @@ public class WebSocketServer {
         Collection<Session> sessions = sessionMap.values();
         for (Session session : sessions) {
             try {
-                // 服务器向客户端发送消息
+                //服务器向客户端发送消息
                 session.getBasicRemote().sendText(message);
             } catch (Exception e) {
                 e.printStackTrace();

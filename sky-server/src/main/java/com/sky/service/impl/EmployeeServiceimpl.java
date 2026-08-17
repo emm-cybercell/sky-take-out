@@ -1,12 +1,11 @@
-//处理业务
 package com.sky.service.impl;
 
-import com.sky.context.BaseContext;
-import com.sky.result.PageResult;
-import com.sky.dto.EmployeeDTO;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
+import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.dto.EmployeePageQueryDTO;
 import com.sky.entity.Employee;
@@ -14,22 +13,24 @@ import com.sky.exception.AccountLockedException;
 import com.sky.exception.AccountNotFoundException;
 import com.sky.exception.PasswordErrorException;
 import com.sky.mapper.EmployeeMapper;
+import com.sky.result.PageResult;
 import com.sky.service.EmployeeService;
-import com.sky.dto.PasswordEditDTO;
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
-import com.github.pagehelper.PageHelper;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-public class EmployeeServiceimpl implements EmployeeService {
+@Slf4j
+@RequiredArgsConstructor
+public class EmployeeServiceImpl implements EmployeeService {
 
-    @Autowired
-    private EmployeeMapper employeeMapper;
+    private final EmployeeMapper employeeMapper;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 员工登录
@@ -39,127 +40,129 @@ public class EmployeeServiceimpl implements EmployeeService {
      */
     public Employee login(EmployeeLoginDTO employeeLoginDTO) {
         String username = employeeLoginDTO.getUsername();
-        String password = employeeLoginDTO.getPassword();
+        String rawPassword = employeeLoginDTO.getPassword();
 
-        // 1、根据用户名查询数据库中的数据
+        //1、根据用户名查询数据库中的数据
         Employee employee = employeeMapper.getByUsername(username);
 
-        // 2、处理各种异常情况（用户名不存在、密码不对、账号被锁定）
+        //2、处理各种异常情况（用户名不存在、密码不对、账号被锁定）
         if (employee == null) {
-            // 账号不存在
+            //账号不存在
             throw new AccountNotFoundException(MessageConstant.ACCOUNT_NOT_FOUND);
         }
 
-        // 密码比对
-        // MD5加密：DigestUtils.md5DigestAsHex()，将原始密码进行MD5加密后与数据库中存储的密码进行比对
-        password = DigestUtils.md5DigestAsHex(password.getBytes());
-        if (!password.equals(employee.getPassword())) {
-            // 密码错误
+        //密码比对：BCrypt 校验（新账号），历史 MD5 账号校验通过后自动升级为 BCrypt
+        if (!checkPassword(rawPassword, employee)) {
+            //密码错误
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
         }
 
         if (employee.getStatus() == StatusConstant.DISABLE) {
-            // 账号被锁定
+            //账号被锁定
             throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
         }
 
-        // 3、返回实体对象
+        //3、返回实体对象
         return employee;
     }
 
+    /**
+     * 校验密码，并对历史 MD5 密码做一次性的 BCrypt 升级
+     * 说明：安全加固时历史数据仍是 MD5 存储，此处兼容校验并静默升级为 BCrypt，
+     * 避免强制所有员工改密；升级逻辑无感知、幂等（已是 BCrypt 则直通）。
+     */
+    private boolean checkPassword(String rawPassword, Employee employee) {
+        String storedPassword = employee.getPassword();
+        if (storedPassword != null && storedPassword.startsWith("$2")) {
+            return passwordEncoder.matches(rawPassword, storedPassword);
+        }
+        // 兼容历史 MD5 密码
+        boolean matched = DigestUtils.md5DigestAsHex(rawPassword.getBytes()).equals(storedPassword);
+        if (matched) {
+            employeeMapper.update(Employee.builder()
+                    .id(employee.getId())
+                    .password(passwordEncoder.encode(rawPassword))
+                    .build());
+            log.info("员工 {} 登录时自动将 MD5 密码升级为 BCrypt", employee.getUsername());
+        }
+        return matched;
+    }
 
     /**
      * 新增员工
+     *
      * @param employeeDTO
      */
     public void save(EmployeeDTO employeeDTO) {
         Employee employee = new Employee();
-        // 对象拷贝
+
+        //对象属性拷贝
         BeanUtils.copyProperties(employeeDTO, employee);
 
-        // 设置账号状态，默认1表示正常
+        //设置账号的状态，默认正常状态 1表示正常 0表示锁定
         employee.setStatus(StatusConstant.ENABLE);
 
-        // 设置初始密码，默认123456，并进行MD5加密
-        employee.setPassword(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()));
+        //设置默认密码123456（BCrypt 加密存储）
+        employee.setPassword(passwordEncoder.encode(PasswordConstant.DEFAULT_PASSWORD));
 
-        // // 设置创建时间和更新时间
-        // employee.setCreateTime(LocalDateTime.now());
-        // employee.setUpdateTime(LocalDateTime.now());
-
-        // // 设置当前记录创始人和修改人ID
-        // employee.setCreateUser(BaseContext.getCurrentId());
-        // employee.setUpdateUser(BaseContext.getCurrentId());
-
+        //创建时间、创建人、修改时间、修改人由 @AutoFill 切面自动填充
         employeeMapper.insert(employee);
     }
 
     /**
-     * 员工分页查询
+     * 分页查询
      *
      * @param employeePageQueryDTO
      * @return
      */
     public PageResult pageQuery(EmployeePageQueryDTO employeePageQueryDTO) {
-        // 开始分页查询
+        //开始分页查询
         PageHelper.startPage(employeePageQueryDTO.getPage(), employeePageQueryDTO.getPageSize());
-        // 拦截紧接着的下一条 SQL 语句，将其改写成分页查询的 SQL 语句，并自动执行分页查询
-        com.github.pagehelper.Page<Employee> page = employeeMapper.pageQuery(employeePageQueryDTO);
-        // 调用 Mapper 层的 SQL 查询方法，获取查询结果
-        return new PageResult(page.getTotal(), page.getResult());
+
+        Page<Employee> page = employeeMapper.pageQuery(employeePageQueryDTO);
+
+        long total = page.getTotal();
+        List<Employee> records = page.getResult();
+
+        return new PageResult(total, records);
     }
 
     /**
      * 启用禁用员工账号
+     *
      * @param status
      * @param id
      */
-    public void startOrStop(Integer status,Long id){ 
-        Employee employee = new Employee();
-        employee.setId(id);
-        employee.setStatus(status);
-        // 或者Employee employee = Employee.builder().id(id).status(status).build();
+    public void startOrStop(Integer status, Long id) {
+        Employee employee = Employee.builder()
+                .status(status)
+                .id(id)
+                .build();
+
         employeeMapper.update(employee);
     }
 
     /**
-     * 根据 id 查询员工信息
+     * 根据id查询员工
+     *
      * @param id
      * @return
      */
-    public Employee getById(Long id){
+    public Employee getById(Long id) {
         Employee employee = employeeMapper.getById(id);
         employee.setPassword("****");
         return employee;
     }
 
     /**
-     * 修改员工信息
+     * 编辑员工信息
+     *
      * @param employeeDTO
-    */
-    public void update(EmployeeDTO employeeDTO){
-        Employee employee = new Employee();
-        BeanUtils.copyProperties(employeeDTO,employee);
-        // employee.setUpdateTime(LocalDateTime.now());
-        // employee.setUpdateUser(BaseContext.getCurrentId());
-        employeeMapper.update(employee);
-    }
-    /**
-     * 修改密码
-     * 
-     * @param passwordeditDTO
      */
-    public void editPassword(PasswordEditDTO passwordeditDTO){
-        Employee employee = employeeMapper.getById(passwordeditDTO.getEmpId());
-        String oldPassword = DigestUtils.md5DigestAsHex(passwordeditDTO.getOldPassword().getBytes());
-        if(!oldPassword.equals(employee.getPassword())){
-            throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
-        }
-        String newPassword = DigestUtils.md5DigestAsHex(passwordeditDTO.getNewPassword().getBytes());
-        employee.setPassword(newPassword);
-        employee.setUpdateTime(LocalDateTime.now());
-        employee.setUpdateUser(BaseContext.getCurrentId());
+    public void update(EmployeeDTO employeeDTO) {
+        Employee employee = new Employee();
+        BeanUtils.copyProperties(employeeDTO, employee);
+
         employeeMapper.update(employee);
     }
-
 }

@@ -12,7 +12,7 @@ import com.sky.vo.DishOverViewVO;
 import com.sky.vo.OrderOverViewVO;
 import com.sky.vo.SetmealOverViewVO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -21,16 +21,13 @@ import java.util.Map;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class WorkspaceServiceImpl implements WorkspaceService {
 
-    @Autowired
-    private OrderMapper orderMapper;
-    @Autowired
-    private UserMapper userMapper;
-    @Autowired
-    private DishMapper dishMapper;
-    @Autowired
-    private SetmealMapper setmealMapper;
+    private final OrderMapper orderMapper;
+    private final UserMapper userMapper;
+    private final DishMapper dishMapper;
+    private final SetmealMapper setmealMapper;
 
     /**
      * 根据时间段统计营业数据

@@ -1,11 +1,10 @@
 package com.sky.mapper;
 
-import java.util.List;
-
+import com.sky.entity.OrderDetail;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
-import com.sky.entity.OrderDetail;
+import java.util.List;
 
 @Mapper
 public interface OrderDetailMapper {
@@ -16,7 +15,7 @@ public interface OrderDetailMapper {
     void insertBatch(List<OrderDetail> orderDetailList);
 
     /**
-     * 根据订单id查询订单详情
+     * 根据订单id查询订单明细
      * @param orderId
      * @return
      */

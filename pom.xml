@@ -18,21 +18,21 @@
         <module>sky-server</module>
     </modules>
     <properties>
-        <java.version>11</java.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
         <mybatis.spring>2.2.0</mybatis.spring>
-        <lombok>1.18.38</lombok>
-        <fastjson>1.2.76</fastjson>
-        <commons.lang>2.6</commons.lang>
+        <!-- 1.18.20 无法在新版 JDK 上运行注解处理器，升级到支持 JDK 26 的版本 -->
+        <lombok>1.18.46</lombok>
+        <!-- 序列化统一使用 Jackson（Spring Boot 内置，替代存在多个高危反序列化漏洞的 fastjson） -->
+        <commons.lang3>3.12.0</commons.lang3>
         <druid>1.2.1</druid>
-        <pagehelper>1.3.0</pagehelper>
+        <!-- 1.3.0 与 Spring Boot 2.7 存在自循环依赖（需开启 allow-circular-references 才能启动），升级到 1.4.7 修复 -->
+        <pagehelper>1.4.7</pagehelper>
         <aliyun.sdk.oss>3.10.2</aliyun.sdk.oss>
         <knife4j>3.0.2</knife4j>
         <aspectj>1.9.4</aspectj>
-        <jjwt>0.9.1</jjwt>
+        <jjwt>0.11.5</jjwt>
         <jaxb-api>2.3.1</jaxb-api>
-        <poi>3.16</poi>
+        <!-- poi 3.16 -> 5.2.5：3.16 存在多个已知 CVE（如 CVE-2019-12415 XXE） -->
+        <poi>5.2.5</poi>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -49,15 +49,9 @@
             </dependency>
 
             <dependency>
-                <groupId>com.alibaba</groupId>
-                <artifactId>fastjson</artifactId>
-                <version>${fastjson}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>commons-lang</groupId>
-                <artifactId>commons-lang</artifactId>
-                <version>${commons.lang}</version>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons.lang3}</version>
             </dependency>
 
             <dependency>
@@ -92,7 +86,18 @@
 
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt</artifactId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt}</version>
+            </dependency>
+            <!-- jjwt 0.9.x 之后拆分为 api/impl/jackson 三个模块 -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
                 <version>${jjwt}</version>
             </dependency>
 
@@ -129,24 +134,48 @@
     </dependencyManagement>
 
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <configuration>
-                        <source>11</source>
-                        <target>11</target>
-                        <annotationProcessorPaths>
-                            <path>
-                                <groupId>org.projectlombok</groupId>
-                                <artifactId>lombok</artifactId>
-                                <version>${lombok}</version>
-                            </path>
-                        </annotationProcessorPaths>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <!-- 新版本 JDK（>= 22）不再从 classpath 自动发现注解处理器，必须显式声明
+                         lombok 处理器路径，否则 @Data/@Slf4j 等生成代码全部缺失 -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
+
+    <!-- 使用阿里云 Maven 镜像加速依赖下载，避免直连中央仓库超时/失败 -->
+    <repositories>
+        <repository>
+            <id>aliyun</id>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>aliyun-plugin</id>
+            <url>https://maven.aliyun.com/repository/public</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 </project>

@@ -16,7 +16,7 @@ import com.sky.result.PageResult;
 import com.sky.service.CategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,14 +26,12 @@ import java.util.List;
  */
 @Service
 @Slf4j
-public class CategoryServiceimpl implements CategoryService {
+@RequiredArgsConstructor
+public class CategoryServiceImpl implements CategoryService {
 
-    @Autowired// Spring 自动帮我们创建对象并赋值
-    private CategoryMapper categoryMapper;
-    @Autowired
-    private DishMapper dishMapper;
-    @Autowired
-    private SetmealMapper setmealMapper;
+    private final CategoryMapper categoryMapper;
+    private final DishMapper dishMapper;
+    private final SetmealMapper setmealMapper;
 
     /**
      * 新增分类
@@ -47,11 +45,11 @@ public class CategoryServiceimpl implements CategoryService {
         //分类状态默认为禁用状态0
         category.setStatus(StatusConstant.DISABLE);
 
-        // //设置创建时间、修改时间、创建人、修改人
-        // category.setCreateTime(LocalDateTime.now());
-        // category.setUpdateTime(LocalDateTime.now());
-        // category.setCreateUser(BaseContext.getCurrentId());
-        // category.setUpdateUser(BaseContext.getCurrentId());
+        //设置创建时间、修改时间、创建人、修改人
+        //category.setCreateTime(LocalDateTime.now());
+        //category.setUpdateTime(LocalDateTime.now());
+        //category.setCreateUser(BaseContext.getCurrentId());
+        //category.setUpdateUser(BaseContext.getCurrentId());
 
         categoryMapper.insert(category);
     }
@@ -99,9 +97,9 @@ public class CategoryServiceimpl implements CategoryService {
         Category category = new Category();
         BeanUtils.copyProperties(categoryDTO,category);
 
-        // //设置修改时间、修改人
-        // category.setUpdateTime(LocalDateTime.now());
-        // category.setUpdateUser(BaseContext.getCurrentId());
+        //设置修改时间、修改人
+        //category.setUpdateTime(LocalDateTime.now());
+        //category.setUpdateUser(BaseContext.getCurrentId());
 
         categoryMapper.update(category);
     }
@@ -115,8 +113,8 @@ public class CategoryServiceimpl implements CategoryService {
         Category category = Category.builder()
                 .id(id)
                 .status(status)
-                .updateTime(LocalDateTime.now())
-                .updateUser(BaseContext.getCurrentId())
+                //.updateTime(LocalDateTime.now())
+                //.updateUser(BaseContext.getCurrentId())
                 .build();
         categoryMapper.update(category);
     }

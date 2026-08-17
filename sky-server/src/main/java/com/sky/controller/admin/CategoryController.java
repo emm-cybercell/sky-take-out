@@ -9,21 +9,21 @@ import com.sky.service.CategoryService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
  * 分类管理
  */
-@RestController// 标明该类是一个 控制器，处理 HTTP 请求
+@RestController
 @RequestMapping("/admin/category")
 @Api(tags = "分类相关接口")
-@Slf4j// 自动在类中生成一个名为 log 的日志对象（类型为 Logger）
+@Slf4j
+@RequiredArgsConstructor
 public class CategoryController {
 
-    @Autowired
-    private CategoryService categoryService;
+    private final CategoryService categoryService;
 
     /**
      * 新增分类

@@ -1,6 +1,25 @@
-**/target/
-.idea
-*.iml
+# Maven 构建产物
+target/
 *.class
-*Test.java
-**/test/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.fleet/
+.settings/
+.project
+.classpath
+
+# 日志与临时文件
+logs/
+*.log
+*.tmp
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 密钥/敏感文件（生产环境通过环境变量注入，禁止提交真实密钥）
+*.pem
+apiclient_key.pem

@@ -1,4 +1,9 @@
+# Spring Boot 应用程序的开发环境配置文件，存放开发环境特有的配置，覆盖 application.yml 中的通用配置
 sky:
+  jwt:
+    # 开发环境默认密钥（仅本地调试用，>= 32 字节以满足 HS256 要求），生产环境通过环境变量 SKY_JWT_ADMIN_SECRET / SKY_JWT_USER_SECRET 覆盖
+    admin-secret-key: sky-admin-jwt-dev-secret-key-2024-0123456789abc
+    user-secret-key: sky-user-jwt-dev-secret-key-2024-abcdefghijklmnop
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     host: localhost
@@ -8,18 +13,18 @@ sky:
     password: 060709
   alioss:
     endpoint: oss-cn-beijing.aliyuncs.com
-    access-key-id: LTAI5t8gqtwcb1akgUr2jhvs
-    access-key-secret: qMILhlIwX6onVp7onfHCouD0bAPFZN
-    bucket-name: sky-itcast-pdf
+    access-key-id: your-access-key-id
+    access-key-secret: your-access-key-secret
+    bucket-name: your-bucket-name
   redis:
     host: localhost
     port: 6379
-    password:
-    database: 0
+    password: 123456
+    database: 10
   wechat:
-    appid: wx5ecd4a2c24d8e309
-    secret: 188602aebf6c994cca6ba7a271452d0a
-    mchid: 1561414331
+    appid: wxffb3637a228223b8
+    secret: 84311df9199ecacdf4f12d27b6b9522d
+    mchid : 1561414331
     mchSerialNo: 4B3B3DC35414AD50B1B755BAF8DE9CC7CF407606
     privateKeyFilePath: D:\pay\apiclient_key.pem
     apiV3Key: CZBK51236435wxpay435434323FFDuv3

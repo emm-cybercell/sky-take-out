@@ -100,10 +100,12 @@ public class Orders implements Serializable {
     private LocalDateTime deliveryTime;
 
     //打包费
-    private int packAmount;
+    // 使用包装类型：DTO 未传该字段时为 null（对应数据库列 DEFAULT NULL），
+    // 避免 BeanUtils.copyProperties 在 null -> int 时抛 NullPointerException
+    private Integer packAmount;
 
     //餐具数量
-    private int tablewareNumber;
+    private Integer tablewareNumber;
 
     //餐具数量状态  1按餐量提供  0选择具体数量
     private Integer tablewareStatus;

@@ -1,11 +1,12 @@
 package com.sky.utils;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sky.properties.WeChatProperties;
 import com.wechat.pay.contrib.apache.httpclient.WechatPayHttpClientBuilder;
 import com.wechat.pay.contrib.apache.httpclient.util.PemUtil;
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -14,9 +15,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -35,17 +35,18 @@ import java.util.List;
  * 微信支付工具类
  */
 @Component
+@RequiredArgsConstructor
 @Slf4j
 public class WeChatPayUtil {
 
-    // 微信支付下单接口地址
+    //微信支付下单接口地址
     public static final String JSAPI = "https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi";
 
-    // 申请退款接口地址
+    //申请退款接口地址
     public static final String REFUNDS = "https://api.mch.weixin.qq.com/v3/refund/domestic/refunds";
 
-    @Autowired
-    private WeChatProperties weChatProperties;
+    private final WeChatProperties weChatProperties;
+    private final ObjectMapper objectMapper;
 
     /**
      * 获取调用微信接口的客户端工具对象
@@ -55,13 +56,11 @@ public class WeChatPayUtil {
     private CloseableHttpClient getClient() {
         PrivateKey merchantPrivateKey = null;
         try {
-            // merchantPrivateKey商户API私钥，如何加载商户API私钥请看常见问题
-            merchantPrivateKey = PemUtil
-                    .loadPrivateKey(new FileInputStream(new File(weChatProperties.getPrivateKeyFilePath())));
-            // 加载平台证书文件
-            X509Certificate x509Certificate = PemUtil
-                    .loadCertificate(new FileInputStream(new File(weChatProperties.getWeChatPayCertFilePath())));
-            // wechatPayCertificates微信支付平台证书列表。你也可以使用后面章节提到的“定时更新平台证书功能”，而不需要关心平台证书的来龙去脉
+            //merchantPrivateKey商户API私钥，如何加载商户API私钥请看常见问题
+            merchantPrivateKey = PemUtil.loadPrivateKey(new FileInputStream(new File(weChatProperties.getPrivateKeyFilePath())));
+            //加载平台证书文件
+            X509Certificate x509Certificate = PemUtil.loadCertificate(new FileInputStream(new File(weChatProperties.getWeChatPayCertFilePath())));
+            //wechatPayCertificates微信支付平台证书列表。你也可以使用后面章节提到的“定时更新平台证书功能”，而不需要关心平台证书的来龙去脉
             List<X509Certificate> wechatPayCertificates = Arrays.asList(x509Certificate);
 
             WechatPayHttpClientBuilder builder = WechatPayHttpClientBuilder.create()
@@ -137,25 +136,25 @@ public class WeChatPayUtil {
      * @return
      */
     private String jsapi(String orderNum, BigDecimal total, String description, String openid) throws Exception {
-        JSONObject jsonObject = new JSONObject();
+        ObjectNode jsonObject = objectMapper.createObjectNode();
         jsonObject.put("appid", weChatProperties.getAppid());
         jsonObject.put("mchid", weChatProperties.getMchid());
         jsonObject.put("description", description);
         jsonObject.put("out_trade_no", orderNum);
         jsonObject.put("notify_url", weChatProperties.getNotifyUrl());
 
-        JSONObject amount = new JSONObject();
+        ObjectNode amount = objectMapper.createObjectNode();
         amount.put("total", total.multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP).intValue());
         amount.put("currency", "CNY");
 
-        jsonObject.put("amount", amount);
+        jsonObject.set("amount", amount);
 
-        JSONObject payer = new JSONObject();
+        ObjectNode payer = objectMapper.createObjectNode();
         payer.put("openid", openid);
 
-        jsonObject.put("payer", payer);
+        jsonObject.set("payer", payer);
 
-        String body = jsonObject.toJSONString();
+        String body = objectMapper.writeValueAsString(jsonObject);
         return post(JSAPI, body);
     }
 
@@ -168,14 +167,14 @@ public class WeChatPayUtil {
      * @param openid      微信用户的openid
      * @return
      */
-    public JSONObject pay(String orderNum, BigDecimal total, String description, String openid) throws Exception {
-        // 统一下单，生成预支付交易单
+    public JsonNode pay(String orderNum, BigDecimal total, String description, String openid) throws Exception {
+        //统一下单，生成预支付交易单
         String bodyAsString = jsapi(orderNum, total, description, openid);
-        // 解析返回结果
-        JSONObject jsonObject = JSON.parseObject(bodyAsString);
-        System.out.println(jsonObject);
+        //解析返回结果：prepay_id 存在则继续二次签名，否则原样返回微信错误响应（如 ORDERPAID）
+        JsonNode jsonObject = objectMapper.readTree(bodyAsString);
+        log.info("微信支付下单响应：{}", bodyAsString);
 
-        String prepayId = jsonObject.getString("prepay_id");
+        String prepayId = jsonObject.get("prepay_id") == null ? null : jsonObject.get("prepay_id").asText();
         if (prepayId != null) {
             String timeStamp = String.valueOf(System.currentTimeMillis() / 1000);
             String nonceStr = RandomStringUtils.randomNumeric(32);
@@ -184,7 +183,7 @@ public class WeChatPayUtil {
             list.add(timeStamp);
             list.add(nonceStr);
             list.add("prepay_id=" + prepayId);
-            // 二次签名，调起支付需要重新签名
+            //二次签名，调起支付需要重新签名
             StringBuilder stringBuilder = new StringBuilder();
             for (Object o : list) {
                 stringBuilder.append(o).append("\n");
@@ -193,13 +192,12 @@ public class WeChatPayUtil {
             byte[] message = signMessage.getBytes();
 
             Signature signature = Signature.getInstance("SHA256withRSA");
-            signature.initSign(
-                    PemUtil.loadPrivateKey(new FileInputStream(new File(weChatProperties.getPrivateKeyFilePath()))));
+            signature.initSign(PemUtil.loadPrivateKey(new FileInputStream(new File(weChatProperties.getPrivateKeyFilePath()))));
             signature.update(message);
             String packageSign = Base64.getEncoder().encodeToString(signature.sign());
 
-            // 构造数据给微信小程序，用于调起微信支付
-            JSONObject jo = new JSONObject();
+            //构造数据给微信小程序，用于调起微信支付
+            ObjectNode jo = objectMapper.createObjectNode();
             jo.put("timeStamp", timeStamp);
             jo.put("nonceStr", nonceStr);
             jo.put("package", "prepay_id=" + prepayId);
@@ -214,16 +212,28 @@ public class WeChatPayUtil {
     /**
      * 申请退款
      *
-     * @param outTradeNo  商户订单号
-     * @param outRefundNo 商户退款单号
-     * @param refund      退款金额
-     * @param total       原订单金额
+     * @param outTradeNo    商户订单号
+     * @param outRefundNo   商户退款单号
+     * @param refund        退款金额
+     * @param total         原订单金额
      * @return
      */
     public String refund(String outTradeNo, String outRefundNo, BigDecimal refund, BigDecimal total) throws Exception {
-        // ponytail: 测试环境跳过真实微信退款（本地无真实支付单号，调用微信接口会失败）。
-        // 若需恢复真实退款，删除下面两行并还原下方原 post(REFUNDS, body) 逻辑即可。
-        log.info("测试模式：跳过微信退款，订单号 {} 退款金额 {} 元", outTradeNo, refund);
-        return "{\"code\":\"SUCCESS\",\"message\":\"模拟退款成功\"}";
+        ObjectNode jsonObject = objectMapper.createObjectNode();
+        jsonObject.put("out_trade_no", outTradeNo);
+        jsonObject.put("out_refund_no", outRefundNo);
+
+        ObjectNode amount = objectMapper.createObjectNode();
+        amount.put("refund", refund.multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP).intValue());
+        amount.put("total", total.multiply(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_HALF_UP).intValue());
+        amount.put("currency", "CNY");
+
+        jsonObject.set("amount", amount);
+        jsonObject.put("notify_url", weChatProperties.getRefundNotifyUrl());
+
+        String body = objectMapper.writeValueAsString(jsonObject);
+
+        //调用申请退款接口
+        return post(REFUNDS, body);
     }
 }
